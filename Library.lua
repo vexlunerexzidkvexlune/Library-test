@@ -6,7 +6,7 @@
  ╚████╔╝ ███████╗███████╗╚██████╔╝██║  ██║██║██║  ██║
   ╚═══╝  ╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
 ]]
--- By Rexz Izin
+-- By Rexz Cihuy 
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
@@ -403,9 +403,9 @@ local Templates = {
         SnapMargin = 8,
         SnapAvoidCoreGui = true,
 
-        -- Search topbar dimatikan agar tidak mengganggu Title dan tombol kanan.
-        SearchbarSize = UDim2.fromScale(1, 1),
-        DisableSearch = true,
+        -- Search bar: aktif, fixed width supaya tidak nabrak title / tombol kanan.
+        SearchbarSize = UDim2.fromOffset(180, 32),
+        DisableSearch = false,
         GlobalSearch = false,
 
         CornerRadius = 6,
@@ -10695,6 +10695,9 @@ function Library:CreateWindow(WindowInfo)
     }
 
     local InitialLeftWidth = math.ceil(WindowInfo.Size.X.Offset * 0.3)
+    -- Lebar area title topbar dibuat independen dari sidebar agar title tidak
+    -- pernah masuk ke area icon ketika sidebar sedang compact.
+    local TopbarTitleWidth = math.max(220, InitialLeftWidth)
     local IsCompact = WindowInfo.SidebarCompacted
     local LastExpandedWidth = InitialLeftWidth
 
@@ -10804,7 +10807,8 @@ function Library:CreateWindow(WindowInfo)
         --// Title \\--
         TitleHolder = New("Frame", {
             BackgroundTransparency = 1,
-            Size = UDim2.new(0, InitialLeftWidth, 1, 0),
+            ClipsDescendants = true,
+            Size = UDim2.new(0, TopbarTitleWidth, 1, 0),
             Parent = TopBar,
         })
         New("UIListLayout", {
@@ -10848,10 +10852,13 @@ function Library:CreateWindow(WindowInfo)
         )
         WindowTitle = New("TextLabel", {
             BackgroundTransparency = 1,
-            Size = UDim2.new(0, X, 1, 0),
+            LayoutOrder = 2,
+            Size = UDim2.new(0, math.min(X, math.max(0, TopbarTitleWidth - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 42 or 30))), 1, 0),
             Text = WindowInfo.Title,
             TextSize = 18,
             FontFace = Library.Scheme.Font,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextTruncate = Enum.TextTruncate.AtEnd,
             -- Veloria: title warna accent merah
             TextColor3 = Library.Scheme.AccentColor,
             Parent = TitleHolder,
@@ -10863,7 +10870,7 @@ function Library:CreateWindow(WindowInfo)
             AnchorPoint = Vector2.new(1, 0.5),
             BackgroundTransparency = 1,
             Position = UDim2.new(1, -49, 0.5, 0),
-            Size = UDim2.new(1, -InitialLeftWidth - 57 - 1, 1, -16),
+            Size = UDim2.new(1, -TopbarTitleWidth - 57 - 1, 1, -16),
             Parent = TopBar,
         })
 
@@ -10876,12 +10883,11 @@ function Library:CreateWindow(WindowInfo)
         })
 
         CurrentTabInfo = New("Frame", {
-            Size = UDim2.fromScale(WindowInfo.DisableSearch and 1 or 0.5, 1),
+            Size = UDim2.fromScale(0, 1),
             Visible = false,
             BackgroundTransparency = 1,
             Parent = RightWrapper,
         })
-
         New("UIFlexItem", {
             FlexMode = Enum.UIFlexMode.Grow,
             Parent = CurrentTabInfo,
@@ -10926,18 +10932,16 @@ function Library:CreateWindow(WindowInfo)
 
         SearchBox = New("TextBox", {
             BackgroundColor3 = "MainColor",
-            PlaceholderText = "Search",
-            -- Search sekarang fleksibel dan hanya mengambil ruang yang tersisa
-            -- setelah CurrentTabInfo dan tombol Discord/Minimize/Close.
+            PlaceholderText = "Search features...",
+            ClearTextOnFocus = false,
             Size = WindowInfo.SearchbarSize,
-            TextScaled = true,
+            TextSize = 14,
+            TextXAlignment = Enum.TextXAlignment.Left,
             Visible = not (WindowInfo.DisableSearch or false),
             Parent = RightWrapper,
         })
         New("UIFlexItem", {
-            -- Jangan biarkan Search memaksa lebar tetap dan menabrak tombol kanan.
-            -- Grow = mengisi ruang kosong, Shrink = mengecil saat ruang sempit.
-            FlexMode = Enum.UIFlexMode.Grow,
+            FlexMode = Enum.UIFlexMode.Shrink,
             Parent = SearchBox,
         })
         table.insert(
@@ -10948,10 +10952,10 @@ function Library:CreateWindow(WindowInfo)
             })
         )
         New("UIPadding", {
-            PaddingBottom = UDim.new(0, 8),
-            PaddingLeft = UDim.new(0, 8),
-            PaddingRight = UDim.new(0, 8),
-            PaddingTop = UDim.new(0, 8),
+            PaddingBottom = UDim.new(0, 2),
+            PaddingLeft = UDim.new(0, 34),
+            PaddingRight = UDim.new(0, 10),
+            PaddingTop = UDim.new(0, 2),
             Parent = SearchBox,
         })
         local SearchBoxStroke = New("UIStroke", {
@@ -10976,10 +10980,12 @@ function Library:CreateWindow(WindowInfo)
         local SearchIcon = Library:GetIcon("search")
         if SearchIcon then
             local SearchIconImage = New("ImageLabel", {
+                AnchorPoint = Vector2.new(0, 0.5),
+                BackgroundTransparency = 1,
                 ImageColor3 = "FontColor",
-                ImageTransparency = 0.5,
-                Size = UDim2.fromScale(1, 1),
-                SizeConstraint = Enum.SizeConstraint.RelativeYY,
+                ImageTransparency = 0.45,
+                Position = UDim2.new(0, 10, 0.5, 0),
+                Size = UDim2.fromOffset(16, 16),
                 Parent = SearchBox,
             })
             Library:ApplyLucideIcon(SearchIconImage, SearchIcon)
@@ -11527,8 +11533,9 @@ function Library:CreateWindow(WindowInfo)
 
         DividerLine.Position = UDim2.fromOffset(Width, 0)
 
-        TitleHolder.Size = UDim2.new(0, Width, 1, 0)
-        RightWrapper.Size = UDim2.new(1, -Width - 57 - 1, 1, -16)
+        -- Title topbar is independent from the sidebar width.
+        TitleHolder.Size = UDim2.new(0, TopbarTitleWidth, 1, 0)
+        RightWrapper.Size = UDim2.new(1, -TopbarTitleWidth - 57 - 1, 1, -16)
         Tabs.Size = UDim2.new(0, Width, 1, -70)
         Container.Size = UDim2.new(1, -Width - 1, 1, -70)
 
@@ -11547,7 +11554,7 @@ function Library:CreateWindow(WindowInfo)
         if IsDefaultSearchbarSize then
             -- CurrentTabInfo + Search berbagi area kiri dari topbar.
             -- Search akan tetap tunduk pada tombol kanan karena memakai UIFlex.
-            SearchBox.Size = UDim2.fromScale(1, 1)
+            SearchBox.Size = WindowInfo.SearchbarSize
         end
         CurrentTabInfo.Visible = true
     end
@@ -11555,7 +11562,7 @@ function Library:CreateWindow(WindowInfo)
     function Window:HideTabInfo()
         CurrentTabInfo.Visible = false
         if IsDefaultSearchbarSize then
-            SearchBox.Size = UDim2.fromScale(1, 1)
+            SearchBox.Size = WindowInfo.SearchbarSize
         end
     end
 
