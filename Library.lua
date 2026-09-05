@@ -1,4 +1,3 @@
--- Veloria Hub Edition — custom red/black sidebar layout
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
@@ -276,17 +275,22 @@ local Library = {
     --// Scheme \\--
     IsLightTheme = false,
     Scheme = {
-        BackgroundColor = Color3.fromRGB(8, 8, 8),
-        MainColor = Color3.fromRGB(13, 13, 13),
-        AccentColor = Color3.fromRGB(235, 45, 35),
-        OutlineColor = Color3.fromRGB(92, 24, 24),
+        -- Veloria Hub — merah-hitam
+        BackgroundColor = Color3.fromRGB(10, 10, 10),
+        MainColor = Color3.fromRGB(18, 18, 18),
+        AccentColor = Color3.fromRGB(210, 35, 35),
+        OutlineColor = Color3.fromRGB(80, 15, 15),
         FontColor = Color3.new(1, 1, 1),
-        Font = Font.fromEnum(Enum.Font.Code),
+        Font = Font.fromEnum(Enum.Font.GothamSemibold),
 
-        RedColor = Color3.fromRGB(255, 50, 50),
-        DestructiveColor = Color3.fromRGB(220, 38, 38),
+        RedColor = Color3.fromRGB(210, 35, 35),
+        DestructiveColor = Color3.fromRGB(200, 20, 20),
         DarkColor = Color3.new(0, 0, 0),
         WhiteColor = Color3.new(1, 1, 1),
+
+        -- Veloria sidebar bg
+        SidebarColor = Color3.fromRGB(13, 5, 5),
+        SidebarAccentColor = Color3.fromRGB(210, 35, 35),
 
         BackgroundImage = ""
     },
@@ -372,12 +376,12 @@ local Templates = {
 
     --// Library \\--
     Window = {
-        Title = "No Title",
-        Footer = "No Footer",
+        Title = "Veloria Hub",
+        Footer = "Veloria Hub",
 
         Position = UDim2.fromOffset(6, 6),
-        Size = UDim2.fromOffset(720, 600),
-        IconSize = UDim2.fromOffset(30, 30),
+        Size = UDim2.fromOffset(680, 560),
+        IconSize = UDim2.fromOffset(28, 28),
 
         AutoShow = true,
         Center = true,
@@ -393,11 +397,11 @@ local Templates = {
         SearchbarSize = UDim2.fromScale(1, 1),
         GlobalSearch = false,
 
-        CornerRadius = 4,
+        CornerRadius = 6,
         NotifySide = "Right",
         ShowCustomCursor = true,
 
-        Font = Enum.Font.Code,
+        Font = Enum.Font.GothamSemibold,
         ToggleKeybind = Enum.KeyCode.RightControl,
 
         ShowMobileButtons = true,
@@ -405,47 +409,43 @@ local Templates = {
 
         UnlockMouseWhileOpen = true,
 
-        EnableSidebarResize = false,
+        -- Veloria: sidebar compact by default (icon-only, kayak foto)
+        EnableSidebarResize = true,
         EnableCompacting = true,
         DisableCompactingSnap = false,
-        SidebarCompacted = false,
+        SidebarCompacted = true,
         MinContainerWidth = 256,
 
         --// Snapping \\--
-        MinSidebarWidth = 128,
+        MinSidebarWidth = 48,
         SidebarCompactWidth = 48,
         SidebarCollapseThreshold = 0.5,
 
         --// Dragging \\--
-        CompactWidthActivation = 128,
-
-        --// Veloria Sidebar \\--
-        SidebarLogo = "",
-        SidebarLogoSize = UDim2.fromOffset(92, 92),
-        IconOnlySidebar = false,
+        CompactWidthActivation = 80,
 
         --// Background \\--
         BackgroundImage = "",
 
         --// Animations \\--
         Animations = {
-            ToggleWindow = false,
-            TabSwitch = false,
-            Groupbox = false,
-            Dropdown = false,
-            KeyPicker = false,
+            ToggleWindow = true,
+            TabSwitch = true,
+            Groupbox = true,
+            Dropdown = true,
+            KeyPicker = true,
         },
 
-        TabTransitionTime = 0.22,
-        TabSwipeOffset = 26,
+        TabTransitionTime = 0.18,
+        TabSwipeOffset = 20,
         TabSwipeFrom = "bottom",
         TabButtonsStyle = {
-            Gap = 0,
-            Padding = 0,
-            CornerRadius = 0,
-            Indicator = false,
-            IndicatorWidth = 2,
-            IndicatorHeight = 20,
+            Gap = 2,
+            Padding = 4,
+            CornerRadius = 6,
+            Indicator = true,
+            IndicatorWidth = 3,
+            IndicatorHeight = 22,
         },
     },
     Groupbox = {
@@ -1656,7 +1656,7 @@ local function SetAlwaysOnTop(Gui: ScreenGui, Enabled: boolean)
 end
 
 local ScreenGui = New("ScreenGui", {
-    Name = "VeloriaHub",
+    Name = "Obsidian",
     DisplayOrder = 998,
     ResetOnSpawn = false,
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
@@ -10795,8 +10795,6 @@ function Library:CreateWindow(WindowInfo)
             Parent = TitleHolder,
         })
 
-        TitleHolder.Visible = not WindowInfo.IconOnlySidebar
-
         if WindowInfo.Icon then
             local Icon = Library:GetCustomIcon(WindowInfo.Icon)
             WindowIcon = New("ImageLabel", {
@@ -11037,59 +11035,23 @@ function Library:CreateWindow(WindowInfo)
             Library:ApplyLucideIcon(WindowResizeIcon, ResizeIcon)
         end
 
-        --// Tabs \\--
-        --// Veloria Sidebar Logo
-        local SidebarLogoHolder = New("Frame", {
-            BackgroundTransparency = 1,
-            Position = UDim2.fromOffset(0, 49),
-            Size = UDim2.new(0, InitialLeftWidth, 0, 100),
-            Parent = MainFrame,
-        })
-
-        local SidebarLogo = New("ImageLabel", {
-            AnchorPoint = Vector2.new(0.5, 0.5),
-            BackgroundTransparency = 1,
-            Position = UDim2.fromScale(0.5, 0.5),
-            Size = WindowInfo.SidebarLogoSize,
-            ScaleType = Enum.ScaleType.Fit,
-            Visible = false,
-            Parent = SidebarLogoHolder,
-        })
-
-        local SidebarLogoStroke = New("UIStroke", {
-            Color = "OutlineColor",
-            Transparency = 1,
-            Thickness = 1,
-            Parent = SidebarLogo,
-        })
-
-        local function SetVeloriaSidebarLogo(Image)
-            local Icon = Library:GetCustomIcon(Image)
-            if Icon then
-                Library:ApplyLucideIcon(SidebarLogo, Icon)
-                SidebarLogo.Visible = true
-                SidebarLogoStroke.Transparency = 0.2
-            else
-                SidebarLogo.Visible = false
-                SidebarLogoStroke.Transparency = 1
-            end
-        end
-
-        SetVeloriaSidebarLogo(WindowInfo.SidebarLogo)
-
+        --// Tabs \\-- (Veloria: sidebar merah-gelap)
         Tabs = New("ScrollingFrame", {
             AutomaticCanvasSize = Enum.AutomaticSize.Y,
-            BackgroundColor3 = "BackgroundColor",
+            BackgroundColor3 = function()
+                -- Veloria sidebar: lebih gelap dan red-tinted dari background
+                return Library.Scheme.SidebarColor or Color3.fromRGB(13, 5, 5)
+            end,
             CanvasSize = UDim2.fromScale(0, 0),
-            Position = UDim2.fromOffset(0, WindowInfo.SidebarLogo ~= "" and 149 or 49),
+            Position = UDim2.fromOffset(0, 49),
             ScrollBarThickness = 0,
-            Size = UDim2.new(
-                0,
-                InitialLeftWidth,
-                1,
-                WindowInfo.SidebarLogo ~= "" and -169 or -70
-            ),
+            Size = UDim2.new(0, InitialLeftWidth, 1, -70),
             Parent = MainFrame,
+        })
+        Library:AddToRegistry(Tabs, {
+            BackgroundColor3 = function()
+                return Library.Scheme.SidebarColor or Color3.fromRGB(13, 5, 5)
+            end,
         })
         New("UIListLayout", {
             Padding = UDim.new(0, TabButtonsStyle.Gap),
@@ -11144,32 +11106,6 @@ function Library:CreateWindow(WindowInfo)
 
         WindowTitle.Text = title
         WindowInfo.Title = title
-    end
-
-    function Window:SetSidebarLogo(Image: string)
-        WindowInfo.SidebarLogo = Image or ""
-        SetVeloriaSidebarLogo(WindowInfo.SidebarLogo)
-
-        local HasLogo = WindowInfo.SidebarLogo ~= ""
-        SidebarLogoHolder.Visible = HasLogo
-        Tabs.Position = UDim2.fromOffset(0, HasLogo and 149 or 49)
-        Tabs.Size = UDim2.new(
-            0,
-            Window:GetSidebarWidth(),
-            1,
-            HasLogo and -169 or -70
-        )
-    end
-
-    function Window:SetSidebarIconOnly(State: boolean)
-        WindowInfo.IconOnlySidebar = State == true
-        TitleHolder.Visible = not WindowInfo.IconOnlySidebar
-
-        for _, Button in Library.TabButtons do
-            if Button.Label then
-                Button.Label.Visible = not IsCompact and not WindowInfo.IconOnlySidebar
-            end
-        end
     end
 
     function Window:SetBackgroundImage(Image: string)
@@ -11387,7 +11323,7 @@ function Library:CreateWindow(WindowInfo)
                 continue
             end
 
-            Button.Label.Visible = not IsCompact and not WindowInfo.IconOnlySidebar
+            Button.Label.Visible = not IsCompact
             Button.Padding.PaddingBottom = UDim.new(0, IsCompact and 6 or 11)
             Button.Padding.PaddingLeft = UDim.new(0, IsCompact and 6 or 12)
             Button.Padding.PaddingRight = UDim.new(0, IsCompact and 6 or 12)
@@ -11415,17 +11351,7 @@ function Library:CreateWindow(WindowInfo)
 
         TitleHolder.Size = UDim2.new(0, Width, 1, 0)
         RightWrapper.Size = UDim2.new(1, -Width - 57 - 1, 1, -16)
-        Tabs.Size = UDim2.new(
-            0,
-            Width,
-            1,
-            WindowInfo.SidebarLogo ~= "" and -169 or -70
-        )
-
-        if SidebarLogoHolder then
-            SidebarLogoHolder.Size = UDim2.new(0, Width, 0, 100)
-        end
-
+        Tabs.Size = UDim2.new(0, Width, 1, -70)
         Container.Size = UDim2.new(1, -Width - 1, 1, -70)
 
         if WindowInfo.EnableCompacting then
@@ -11492,7 +11418,7 @@ function Library:CreateWindow(WindowInfo)
             TabButton = New("TextButton", {
                 BackgroundColor3 = "MainColor",
                 BackgroundTransparency = 1,
-                Size = UDim2.new(1, 0, 0, 40),
+                Size = UDim2.new(1, 0, 0, 44),
                 Text = "",
                 LayoutOrder = Order,
                 Parent = Tabs,
@@ -11503,11 +11429,12 @@ function Library:CreateWindow(WindowInfo)
             })
 
             if TabButtonsStyle.Indicator then
+                -- Veloria: indicator bar di kiri (bukan kanan), warna merah
                 TabIndicator = New("Frame", {
-                    AnchorPoint = Vector2.new(1, 0.5),
+                    AnchorPoint = Vector2.new(0, 0.5),
                     BackgroundColor3 = "AccentColor",
                     BackgroundTransparency = 1,
-                    Position = UDim2.new(0, -2, 0.5, 0),
+                    Position = UDim2.new(0, 0, 0.5, 0),
                     Size = UDim2.fromOffset(TabButtonsStyle.IndicatorWidth, TabButtonsStyle.IndicatorHeight),
                     Parent = TabButton,
                 })
@@ -11524,10 +11451,10 @@ function Library:CreateWindow(WindowInfo)
                 Parent = TabButton,
             })
             local ButtonPadding = New("UIPadding", {
-                PaddingBottom = UDim.new(0, IsCompact and 6 or 11),
-                PaddingLeft = UDim.new(0, IsCompact and 6 or 12),
-                PaddingRight = UDim.new(0, IsCompact and 6 or 12),
-                PaddingTop = UDim.new(0, IsCompact and 6 or 11),
+                PaddingBottom = UDim.new(0, IsCompact and 10 or 11),
+                PaddingLeft = UDim.new(0, IsCompact and 10 or 12),
+                PaddingRight = UDim.new(0, IsCompact and 10 or 12),
+                PaddingTop = UDim.new(0, IsCompact and 10 or 11),
                 Parent = ButtonHolder,
             })
             TabLabel = New("TextLabel", {
@@ -11535,17 +11462,18 @@ function Library:CreateWindow(WindowInfo)
                 Position = UDim2.fromOffset(30, 0),
                 Size = UDim2.new(1, -30, 1, 0),
                 Text = Name,
-                TextSize = 16,
+                TextSize = 14,
                 TextTransparency = 0.5,
                 TextXAlignment = Enum.TextXAlignment.Left,
-                Visible = not IsCompact and not WindowInfo.IconOnlySidebar,
+                Visible = not IsCompact,
                 Parent = ButtonHolder,
             })
 
             if Icon then
                 TabIcon = New("ImageLabel", {
+                    -- Veloria: icon merah transparan saat idle, solid merah saat aktif
                     ImageColor3 = "AccentColor",
-                    ImageTransparency = 0.5,
+                    ImageTransparency = 0.55,
                     ScaleType = Enum.ScaleType.Fit,
                     Size = UDim2.fromScale(1, 1),
                     SizeConstraint = IsCompact and Enum.SizeConstraint.RelativeXY or Enum.SizeConstraint.RelativeYY,
@@ -12631,12 +12559,17 @@ function Library:CreateWindow(WindowInfo)
                 return
             end
 
+            -- Veloria: red bg flash on hover
+            TabButton.BackgroundColor3 = Library.Scheme.AccentColor
+            TweenService:Create(TabButton, Library.TweenInfo, {
+                BackgroundTransparency = Hovering and 0.92 or 1,
+            }):Play()
             TweenService:Create(TabLabel, Library.TweenInfo, {
-                TextTransparency = Hovering and 0.25 or 0.5,
+                TextTransparency = Hovering and 0.2 or 0.5,
             }):Play()
             if TabIcon then
                 TweenService:Create(TabIcon, Library.TweenInfo, {
-                    ImageTransparency = Hovering and 0.25 or 0.5,
+                    ImageTransparency = Hovering and 0.2 or 0.55,
                 }):Play()
             end
         end
@@ -12650,11 +12583,13 @@ function Library:CreateWindow(WindowInfo)
                 Library.ActiveTab:Hide()
             end
 
-            TabButton.BackgroundColor3 = Color3.fromRGB(42, 12, 12)
+            -- Veloria: active tab bg = merah sangat gelap, semi-transparan
+            TabButton.BackgroundColor3 = Library.Scheme.AccentColor
             TweenService:Create(TabButton, Library.TweenInfo, {
-                BackgroundTransparency = 0.25,
+                BackgroundTransparency = 0.82,
             }):Play()
             if TabIndicator then
+                -- indicator merah solid
                 TweenService:Create(TabIndicator, Library.TweenInfo, {
                     BackgroundTransparency = 0,
                 }):Play()
@@ -12663,6 +12598,8 @@ function Library:CreateWindow(WindowInfo)
                 TextTransparency = 0,
             }):Play()
             if TabIcon then
+                -- icon merah solid saat aktif
+                TabIcon.ImageColor3 = Library.Scheme.AccentColor
                 TweenService:Create(TabIcon, Library.TweenInfo, {
                     ImageTransparency = 0,
                 }):Play()
@@ -12683,7 +12620,6 @@ function Library:CreateWindow(WindowInfo)
         end
 
         function Tab:Hide()
-            TabButton.BackgroundColor3 = Library.Scheme.MainColor
             TweenService:Create(TabButton, Library.TweenInfo, {
                 BackgroundTransparency = 1,
             }):Play()
@@ -12699,8 +12635,10 @@ function Library:CreateWindow(WindowInfo)
             }):Play()
 
             if TabIcon then
+                -- icon redup saat idle, tetap merah tapi transparan
+                TabIcon.ImageColor3 = Library.Scheme.AccentColor
                 TweenService:Create(TabIcon, Library.TweenInfo, {
-                    ImageTransparency = 0.5,
+                    ImageTransparency = 0.55,
                 }):Play()
             end
 
@@ -14801,5 +14739,44 @@ function Library:Unload()
     getgenv().Library = nil
 end
 
+--// Veloria Hub \\--
+-- Shortcut: ganti warna accent (merah) tanpa rebuild window
+function Library:SetAccentColor(Color: Color3)
+    Library.Scheme.AccentColor = Color
+    Library.Scheme.RedColor = Color
+    Library.Scheme.DestructiveColor = Color
+    Library.Scheme.OutlineColor = Color3.fromRGB(
+        math.floor(Color.R * 255 * 0.35),
+        math.floor(Color.G * 255 * 0.35),
+        math.floor(Color.B * 255 * 0.35)
+    )
+    Library:UpdateColorsUsingRegistry()
+
+    -- Refresh tab icon colors
+    for _, Tab in Library.Tabs do
+        if Tab.Button then
+            Tab.Button.BackgroundColor3 = Color
+        end
+    end
+end
+
+-- Shortcut: ganti sidebar color
+function Library:SetSidebarColor(Color: Color3)
+    Library.Scheme.SidebarColor = Color
+    Library:UpdateColorsUsingRegistry()
+end
+
+-- Default Veloria theme (red/black) — lo bisa override setelah CreateWindow
+Library.VeloriaTheme = {
+    -- Preset buat nanti customisasi
+    Red       = Color3.fromRGB(210, 35, 35),
+    DarkRed   = Color3.fromRGB(160, 20, 20),
+    Orange    = Color3.fromRGB(220, 100, 30),
+    Purple    = Color3.fromRGB(130, 60, 210),
+    Blue      = Color3.fromRGB(40, 100, 220),
+    Gold      = Color3.fromRGB(200, 160, 30),
+}
+
 getgenv().Library = Library
+getgenv().VeloriaHub = Library  -- alias
 return Library
