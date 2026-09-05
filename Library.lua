@@ -1,3 +1,4 @@
+-- Rexz Guanteng Hehehe
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
@@ -377,7 +378,7 @@ local Templates = {
     --// Library \\--
     Window = {
         Title = "Veloria Hub",
-        Footer = "Veloria Hub v1.0",
+        Footer = "Veloria Hub By Rexz",
 
         Position = UDim2.fromOffset(6, 6),
         Size = UDim2.fromOffset(680, 560),
@@ -418,7 +419,7 @@ local Templates = {
         EnableSidebarResize = true,
         EnableCompacting = true,
         DisableCompactingSnap = false,
-        SidebarCompacted = false,
+        SidebarCompacted = true,
         MinContainerWidth = 256,
 
         --// Snapping \\--
