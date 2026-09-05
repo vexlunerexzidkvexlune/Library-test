@@ -1,4 +1,3 @@
--- Oiii
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
@@ -378,7 +377,7 @@ local Templates = {
     --// Library \\--
     Window = {
         Title = "Veloria Hub",
-        Footer = "Veloria Hub",
+        Footer = "Veloria Hub v1.0",
 
         Position = UDim2.fromOffset(6, 6),
         Size = UDim2.fromOffset(680, 560),
@@ -419,7 +418,7 @@ local Templates = {
         EnableSidebarResize = true,
         EnableCompacting = true,
         DisableCompactingSnap = false,
-        SidebarCompacted = true,
+        SidebarCompacted = false,
         MinContainerWidth = 256,
 
         --// Snapping \\--
@@ -10795,9 +10794,14 @@ function Library:CreateWindow(WindowInfo)
         })
         New("UIListLayout", {
             FillDirection = Enum.FillDirection.Horizontal,
-            HorizontalAlignment = Enum.HorizontalAlignment.Center,
+            HorizontalAlignment = Enum.HorizontalAlignment.Left,
             VerticalAlignment = Enum.VerticalAlignment.Center,
-            Padding = UDim.new(0, 6),
+            Padding = UDim.new(0, 7),
+            Parent = TitleHolder,
+        })
+        New("UIPadding", {
+            PaddingLeft = UDim.new(0, 12),
+            PaddingRight = UDim.new(0, 8),
             Parent = TitleHolder,
         })
 
@@ -10831,7 +10835,8 @@ function Library:CreateWindow(WindowInfo)
             BackgroundTransparency = 1,
             Size = UDim2.new(0, X, 1, 0),
             Text = WindowInfo.Title,
-            TextSize = 20,
+            TextSize = 18,
+            FontFace = Library.Scheme.Font,
             -- Veloria: title warna accent merah
             TextColor3 = Library.Scheme.AccentColor,
             Parent = TitleHolder,
