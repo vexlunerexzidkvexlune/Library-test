@@ -6,7 +6,7 @@
  ╚████╔╝ ███████╗███████╗╚██████╔╝██║  ██║██║██║  ██║
   ╚═══╝  ╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
 ]]
--- By Rexz Cihuy
+-- By Rexz Cihuy dan ganteng
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
@@ -183,6 +183,7 @@ local Library = {
     Overlay = nil,
 
     Window = nil,
+    ActiveWindow = nil,
     WindowContainer = nil,
 
     --// Search \\--
@@ -448,7 +449,13 @@ local Templates = {
         CompactWidthActivation = 80,
 
         --// Background \\--
+        -- Bisa langsung di-set dari config Window saat CreateWindow:
+        -- BackgroundImage = "rbxassetid://123456789",
+        -- atau URL gambar https://... (akan di-download sebagai custom asset).
         BackgroundImage = "",
+        BackgroundImageTransparency = 0.82,
+        BackgroundImageScaleType = "Stretch",
+        BackgroundImageColor3 = Color3.new(1, 1, 1),
 
         --// Animations \\--
         Animations = {
@@ -3317,7 +3324,7 @@ function Library:AddDraggableMenu(Name: string)
         Parent = Holder,
     })
     New("UIListLayout", {
-        Padding = UDim.new(0, 7),
+        Padding = UDim.new(0, 10),
         Parent = Container,
     })
     New("UIPadding", {
@@ -10706,7 +10713,7 @@ function Library:CreateWindow(WindowInfo)
     local TopbarRightInset = 12
     local TopbarButtonSize = 32
     local TopbarTitleMinWidth = 170
-    local TopbarTitlePreferredWidth = math.max(250, InitialLeftWidth + 24)
+    local TopbarTitlePreferredWidth = math.max(270, InitialLeftWidth + 40)
     local TopbarTitleWidth = TopbarTitlePreferredWidth
 
     local function GetTopbarMetrics(Width)
@@ -10789,20 +10796,57 @@ function Library:CreateWindow(WindowInfo)
 
         local BackgroundIcon = Library:GetCustomIcon(WindowInfo.BackgroundImage)
         HasBackgroundImage = BackgroundIcon ~= nil
+        local BackgroundScaleType = Enum.ScaleType.Stretch
+        if typeof(WindowInfo.BackgroundImageScaleType) == "EnumItem" then
+            BackgroundScaleType = WindowInfo.BackgroundImageScaleType
+        elseif typeof(WindowInfo.BackgroundImageScaleType) == "string" then
+            local RequestedScaleType = Enum.ScaleType[WindowInfo.BackgroundImageScaleType]
+            if RequestedScaleType then
+                BackgroundScaleType = RequestedScaleType
+            end
+        end
+
         BackgroundImage = New("ImageLabel", {
             Active = false,
             Position = UDim2.fromScale(0, 0),
             Size = UDim2.fromScale(1, 1),
-            ScaleType = Enum.ScaleType.Stretch,
+            ScaleType = BackgroundScaleType,
             ZIndex = Overlay.ZIndex + 1,
             BackgroundTransparency = 1,
-            ImageTransparency = 0.75,
+            ImageTransparency = math.clamp(tonumber(WindowInfo.BackgroundImageTransparency) or 0.82, 0, 1),
+            ImageColor3 = WindowInfo.BackgroundImageColor3,
             Visible = false,
             Parent = ScreenGui,
         })
         if BackgroundIcon then
             Library:ApplyLucideIcon(BackgroundImage, BackgroundIcon)
         end
+
+        local function ApplyBackgroundSettings()
+            if not BackgroundImage then
+                return
+            end
+
+            local Transparency = tonumber(WindowInfo.BackgroundImageTransparency)
+            if Transparency ~= nil then
+                BackgroundImage.ImageTransparency = math.clamp(Transparency, 0, 1)
+            end
+
+            if typeof(WindowInfo.BackgroundImageColor3) == "Color3" then
+                BackgroundImage.ImageColor3 = WindowInfo.BackgroundImageColor3
+            end
+
+            local ScaleType = WindowInfo.BackgroundImageScaleType
+            if typeof(ScaleType) == "EnumItem" and ScaleType.EnumType == Enum.ScaleType then
+                BackgroundImage.ScaleType = ScaleType
+            elseif typeof(ScaleType) == "string" then
+                local RequestedScaleType = Enum.ScaleType[ScaleType]
+                if RequestedScaleType then
+                    BackgroundImage.ScaleType = RequestedScaleType
+                end
+            end
+        end
+        ApplyBackgroundSettings()
 
         table.insert(
             Library.Corners,
@@ -10861,8 +10905,8 @@ function Library:CreateWindow(WindowInfo)
             Parent = TitleHolder,
         })
         New("UIPadding", {
-            PaddingLeft = UDim.new(0, 12),
-            PaddingRight = UDim.new(0, 8),
+            PaddingLeft = UDim.new(0, 14),
+            PaddingRight = UDim.new(0, 10),
             Parent = TitleHolder,
         })
 
@@ -10888,7 +10932,7 @@ function Library:CreateWindow(WindowInfo)
 
         -- Title width dihitung dari lebar container, bukan AbsoluteSize saat init.
         -- Ini mencegah title terpotong/masuk ke area icon.
-        local TitleAvailableWidth = math.max(78, TopbarTitleWidth - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 42 or 28))
+        local TitleAvailableWidth = math.max(90, TopbarTitleWidth - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 48 or 30))
         WindowTitle = New("TextLabel", {
             BackgroundTransparency = 1,
             LayoutOrder = 2,
@@ -10977,19 +11021,26 @@ function Library:CreateWindow(WindowInfo)
             Parent = CurrentTabInfo,
         })
 
-        SearchBox = New("TextBox", {
-            BackgroundColor3 = "MainColor",
-            PlaceholderText = "Search features...",
-            ClearTextOnFocus = false,
+        local SearchHolder = New("Frame", {
+            BackgroundTransparency = 1,
             Size = WindowInfo.SearchbarSize,
-            TextSize = 14,
-            TextXAlignment = Enum.TextXAlignment.Left,
             Visible = not (WindowInfo.DisableSearch or false),
             Parent = RightWrapper,
         })
         New("UIFlexItem", {
             FlexMode = Enum.UIFlexMode.Shrink,
-            Parent = SearchBox,
+            Parent = SearchHolder,
+        })
+
+        SearchBox = New("TextBox", {
+            BackgroundColor3 = "MainColor",
+            PlaceholderText = "Search features...",
+            ClearTextOnFocus = false,
+            Size = UDim2.fromScale(1, 1),
+            TextSize = 14,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Visible = true,
+            Parent = SearchHolder,
         })
         table.insert(
             Library.Corners,
@@ -11030,11 +11081,11 @@ function Library:CreateWindow(WindowInfo)
                 AnchorPoint = Vector2.new(0, 0.5),
                 BackgroundTransparency = 1,
                 ImageColor3 = "FontColor",
-                ImageTransparency = 0.45,
+                ImageTransparency = 0.35,
                 Position = UDim2.new(0, 11, 0.5, 0),
                 Size = UDim2.fromOffset(16, 16),
-                ZIndex = SearchBox.ZIndex + 1,
-                Parent = SearchBox,
+                ZIndex = SearchBox.ZIndex + 2,
+                Parent = SearchHolder,
             })
             Library:ApplyLucideIcon(SearchIconImage, SearchIcon)
         end
@@ -11054,11 +11105,12 @@ function Library:CreateWindow(WindowInfo)
             TitleHolder.Size = UDim2.new(0, TitleWidth, 1, 0)
             RightWrapper.Size = UDim2.new(1, -(TitleWidth + TopbarRightInset + 8), 1, -8)
 
-            local TitleAvailable = math.max(78, TitleWidth - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 42 or 28))
+            local TitleAvailable = math.max(90, TitleWidth - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 48 or 30))
             WindowTitle.Size = UDim2.fromOffset(TitleAvailable, 48)
 
-            SearchBox.Size = UDim2.fromOffset(SearchWidth, 32)
-            SearchBox.Visible = not WindowInfo.DisableSearch
+            SearchHolder.Size = UDim2.fromOffset(SearchWidth, 32)
+            SearchHolder.Visible = not WindowInfo.DisableSearch
+            SearchBox.Size = UDim2.fromScale(1, 1)
 
             for _, Child in ipairs(RightWrapper:GetChildren()) do
                 if Child:IsA("TextButton") and Child ~= nil then
@@ -11312,6 +11364,7 @@ function Library:CreateWindow(WindowInfo)
 
     --// Window Table \\--
     local Window = {}
+    Library.ActiveWindow = Window
 
     -- Veloria: assign topbar button refs now that Window exists
     Window.DiscordBtn  = VeloriaDiscordBtn
@@ -11428,6 +11481,28 @@ function Library:CreateWindow(WindowInfo)
 
         HasBackgroundImage = ValidIcon
         WindowInfo.BackgroundImage = Image
+        ApplyBackgroundSettings()
+    end
+
+    function Window:SetBackgroundSettings(ImageTransparency: number?, ScaleType: any?, ImageColor: Color3?)
+        if ImageTransparency ~= nil then
+            WindowInfo.BackgroundImageTransparency = math.clamp(tonumber(ImageTransparency) or 0.82, 0, 1)
+        end
+
+        if ScaleType ~= nil then
+            WindowInfo.BackgroundImageScaleType = ScaleType
+        end
+
+        if ImageColor ~= nil and typeof(ImageColor) == "Color3" then
+            WindowInfo.BackgroundImageColor3 = ImageColor
+        end
+
+        ApplyBackgroundSettings()
+    end
+
+    function Window:SetBackgroundVisible(Visible: boolean)
+        HasBackgroundImage = Visible == true and BackgroundImage.Image ~= ""
+        BackgroundImage.Visible = HasBackgroundImage and MainFrame.Visible
     end
 
     function Window:SetFooter(Footer: string)
@@ -15007,6 +15082,7 @@ function Library:Unload()
     Library.Floats = nil
     Library.Overlay = nil
     Library.WindowContainer = nil
+    Library.ActiveWindow = nil
     Library.KeybindFrame = nil
     Library.KeybindContainer = nil
 
@@ -15014,6 +15090,25 @@ function Library:Unload()
 end
 
 --// Veloria Hub \\--
+-- Background API: bisa dipakai langsung dari Library setelah window dibuat.
+function Library:SetBackgroundImage(Image: string)
+    if Library.ActiveWindow and Library.ActiveWindow.SetBackgroundImage then
+        Library.ActiveWindow:SetBackgroundImage(Image)
+        return Library.ActiveWindow
+    end
+
+    return nil
+end
+
+function Library:SetBackgroundSettings(ImageTransparency: number?, ScaleType: any?, ImageColor: Color3?)
+    if Library.ActiveWindow and Library.ActiveWindow.SetBackgroundSettings then
+        Library.ActiveWindow:SetBackgroundSettings(ImageTransparency, ScaleType, ImageColor)
+        return Library.ActiveWindow
+    end
+
+    return nil
+end
+
 -- Shortcut: ganti warna accent (merah) tanpa rebuild window
 function Library:SetAccentColor(Color: Color3)
     Library.Scheme.AccentColor = Color
