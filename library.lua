@@ -6,7 +6,7 @@
  ╚████╔╝ ███████╗███████╗╚██████╔╝██║  ██║██║██║  ██║
   ╚═══╝  ╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
 ]]
--- By Rexz Cihuy dan ganteng
+-- By Rexz Cihuy
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
@@ -10901,7 +10901,7 @@ function Library:CreateWindow(WindowInfo)
             FillDirection = Enum.FillDirection.Horizontal,
             HorizontalAlignment = Enum.HorizontalAlignment.Left,
             VerticalAlignment = Enum.VerticalAlignment.Center,
-            Padding = UDim.new(0, 7),
+            Padding = UDim.new(0, 13),
             Parent = TitleHolder,
         })
         New("UIPadding", {
@@ -10932,7 +10932,7 @@ function Library:CreateWindow(WindowInfo)
 
         -- Title width dihitung dari lebar container, bukan AbsoluteSize saat init.
         -- Ini mencegah title terpotong/masuk ke area icon.
-        local TitleAvailableWidth = math.max(90, TopbarTitleWidth - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 48 or 30))
+        local TitleAvailableWidth = math.max(90, TopbarTitleWidth - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 54 or 36))
         WindowTitle = New("TextLabel", {
             BackgroundTransparency = 1,
             LayoutOrder = 2,
@@ -11105,7 +11105,7 @@ function Library:CreateWindow(WindowInfo)
             TitleHolder.Size = UDim2.new(0, TitleWidth, 1, 0)
             RightWrapper.Size = UDim2.new(1, -(TitleWidth + TopbarRightInset + 8), 1, -8)
 
-            local TitleAvailable = math.max(90, TitleWidth - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 48 or 30))
+            local TitleAvailable = math.max(90, TitleWidth - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 54 or 36))
             WindowTitle.Size = UDim2.fromOffset(TitleAvailable, 48)
 
             SearchHolder.Size = UDim2.fromOffset(SearchWidth, 32)
@@ -11225,17 +11225,36 @@ function Library:CreateWindow(WindowInfo)
 
         UpdateTopbarLayout()
 
+        -- Dedicated drag handle: keep it clear of the right-side search/buttons.
+        -- The old handle sat on top of the Close button, making the drag area feel covered.
         if MoveIcon then
+            local DragHandle = New("TextButton", {
+                AutoButtonColor = false,
+                BackgroundTransparency = 1,
+                BorderSizePixel = 0,
+                Text = "",
+                Position = UDim2.new(0, TopbarTitleWidth, 0, 0),
+                Size = UDim2.new(1, -(TopbarTitleWidth + 150), 1, 0),
+                ZIndex = TopBar.ZIndex,
+                Parent = TopBar,
+            })
+            Library:MakeDraggable(MainFrame, DragHandle, false, true, WindowSnapConfig)
+
             local MoveIconImage = New("ImageLabel", {
-                AnchorPoint = Vector2.new(1, 0.5),
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                BackgroundTransparency = 1,
                 ImageColor3 = "OutlineColor",
-                Position = UDim2.new(1, -10, 0.5, 0),
-                Size = UDim2.fromOffset(28, 28),
-                SizeConstraint = Enum.SizeConstraint.RelativeYY,
+                Position = UDim2.new(1, -132, 0.5, 0),
+                Size = UDim2.fromOffset(18, 18),
+                Active = false,
                 Parent = TopBar,
             })
             Library:ApplyLucideIcon(MoveIconImage, MoveIcon)
         end
+
+        -- Title itself remains a drag surface, so dragging still works even when
+        -- the transparent center handle is narrow on smaller screens.
+        Library:MakeDraggable(MainFrame, TitleHolder, false, true, WindowSnapConfig)
 
         --// Bottom Bar \\--
         BottomBackground = New("Frame", {
