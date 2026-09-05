@@ -6,7 +6,7 @@
  ╚████╔╝ ███████╗███████╗╚██████╔╝██║  ██║██║██║  ██║
   ╚═══╝  ╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
 ]]
--- By Rexz Cihu
+-- By Rexz Cihuy
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
@@ -407,7 +407,7 @@ local Templates = {
         -- Global topbar search: searches features across every tab, not only Loader.
         -- Topbar controls dibuat sedikit lebih compact agar title/search/button
         -- tetap punya jarak yang konsisten, terutama pada layar mobile.
-        SearchbarSize = UDim2.fromOffset(200, 32),
+        SearchbarSize = UDim2.fromOffset(210, 32),
         DisableSearch = false,
         GlobalSearch = true,
 
@@ -10699,25 +10699,46 @@ function Library:CreateWindow(WindowInfo)
 
     local InitialLeftWidth = math.ceil(WindowInfo.Size.X.Offset * 0.3)
 
-    -- Topbar layout:
-    -- reserve space for search + 3 action buttons before sizing the title.
-    -- This prevents the title from visually colliding with the search box.
+    --// Final topbar layout: one clean horizontal row.
+    -- Keep title and controls in separate zones so they never overlap.
     local TopbarGap = 6
-    local TopbarButtonSize = 32
     local TopbarButtonCount = 3
-    local TopbarControlWidth = (WindowInfo.DisableSearch and 0 or WindowInfo.SearchbarSize.X.Offset)
-        + (TopbarButtonSize * TopbarButtonCount)
-        + (TopbarGap * (WindowInfo.DisableSearch and 2 or 3))
-    local TopbarRightInset = 16
+    local TopbarRightInset = 12
+    local TopbarButtonSize = 32
+    local TopbarTitleMinWidth = 170
+    local TopbarTitlePreferredWidth = math.max(250, InitialLeftWidth + 24)
+    local TopbarTitleWidth = TopbarTitlePreferredWidth
 
-    -- Lebar area title topbar dibuat independen dari sidebar dan otomatis
-    -- mengecil bila ukuran window terlalu sempit.
-    local DesiredTitleWidth = math.max(250, InitialLeftWidth + 30)
-    local MaxTitleWidth = math.max(
-        180,
-        WindowInfo.Size.X.Offset - TopbarControlWidth - TopbarRightInset - 8
-    )
-    local TopbarTitleWidth = math.min(DesiredTitleWidth, MaxTitleWidth)
+    local function GetTopbarMetrics(Width)
+        Width = math.max(Width or WindowInfo.Size.X.Offset, 320)
+
+        local ButtonSize = Width <= 620 and 30 or 32
+        local Gap = Width <= 620 and 5 or 6
+        local SearchWidth = math.clamp(math.floor(Width * 0.30), 160, 220)
+        if WindowInfo.DisableSearch then
+            SearchWidth = 0
+        end
+
+        local ControlsWidth = (WindowInfo.DisableSearch and 0 or SearchWidth)
+            + (ButtonSize * TopbarButtonCount)
+            + (Gap * 3)
+            + TopbarRightInset
+
+        local MaxTitle = math.max(TopbarTitleMinWidth, Width - ControlsWidth - 14)
+        local TitleWidth = math.min(TopbarTitlePreferredWidth, MaxTitle)
+
+        return TitleWidth, SearchWidth, ButtonSize, Gap
+    end
+
+    do
+        local TitleWidth, SearchWidth, ButtonSize, Gap = GetTopbarMetrics(WindowInfo.Size.X.Offset)
+        TopbarTitleWidth = TitleWidth
+        TopbarButtonSize = ButtonSize
+        TopbarGap = Gap
+        if not WindowInfo.DisableSearch then
+            WindowInfo.SearchbarSize = UDim2.fromOffset(SearchWidth, 32)
+        end
+    end
 
     local IsCompact = WindowInfo.SidebarCompacted
     local LastExpandedWidth = InitialLeftWidth
@@ -10867,7 +10888,7 @@ function Library:CreateWindow(WindowInfo)
 
         -- Title width dihitung dari lebar container, bukan AbsoluteSize saat init.
         -- Ini mencegah title terpotong/masuk ke area icon.
-        local TitleAvailableWidth = math.max(72, TopbarTitleWidth - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 42 or 30))
+        local TitleAvailableWidth = math.max(78, TopbarTitleWidth - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 42 or 28))
         WindowTitle = New("TextLabel", {
             BackgroundTransparency = 1,
             LayoutOrder = 2,
@@ -10894,7 +10915,7 @@ function Library:CreateWindow(WindowInfo)
                 1,
                 -(TopbarTitleWidth + TopbarRightInset + 8),
                 1,
-                -10
+                -8
             ),
             ClipsDescendants = true,
             Parent = TopBar,
@@ -11018,6 +11039,41 @@ function Library:CreateWindow(WindowInfo)
             Library:ApplyLucideIcon(SearchIconImage, SearchIcon)
         end
 
+        --// Responsive topbar sizing \--
+        local function UpdateTopbarLayout()
+            if not MainFrame or not MainFrame.Parent then
+                return
+            end
+
+            local Width = MainFrame.AbsoluteSize.X
+            local TitleWidth, SearchWidth, ButtonSize, Gap = GetTopbarMetrics(Width)
+            TopbarTitleWidth = TitleWidth
+            TopbarButtonSize = ButtonSize
+            TopbarGap = Gap
+
+            TitleHolder.Size = UDim2.new(0, TitleWidth, 1, 0)
+            RightWrapper.Size = UDim2.new(1, -(TitleWidth + TopbarRightInset + 8), 1, -8)
+
+            local TitleAvailable = math.max(78, TitleWidth - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 42 or 28))
+            WindowTitle.Size = UDim2.fromOffset(TitleAvailable, 48)
+
+            SearchBox.Size = UDim2.fromOffset(SearchWidth, 32)
+            SearchBox.Visible = not WindowInfo.DisableSearch
+
+            for _, Child in ipairs(RightWrapper:GetChildren()) do
+                if Child:IsA("TextButton") and Child ~= nil then
+                    Child.Size = UDim2.fromOffset(ButtonSize, ButtonSize)
+                end
+            end
+
+            local Layout = RightWrapper:FindFirstChildOfClass("UIListLayout")
+            if Layout then
+                Layout.Padding = UDim.new(0, Gap)
+            end
+        end
+
+        Library:GiveSignal(MainFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateTopbarLayout))
+
         --// Veloria Topbar Buttons \--
         -- Tombol-tombol di sebelah kanan search: Discord, Minimize, Close
         -- Declared as upvalues — assigned to Window table after Window = {} below
@@ -11114,6 +11170,8 @@ function Library:CreateWindow(WindowInfo)
             VeloriaMinimizeBtn = MinimizeBtn
             VeloriaCloseBtn    = CloseBtn
         end
+
+        UpdateTopbarLayout()
 
         if MoveIcon then
             local MoveIconImage = New("ImageLabel", {
