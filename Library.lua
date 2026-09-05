@@ -404,6 +404,11 @@ local Templates = {
         Font = Enum.Font.GothamSemibold,
         ToggleKeybind = Enum.KeyCode.RightControl,
 
+        -- Veloria topbar button callbacks
+        DiscordCallback  = nil,   -- function() -- called when Discord button clicked
+        MinimizeCallback = nil,   -- function() -- override minimize behavior
+        CloseCallback    = nil,   -- function() -- override close behavior
+
         ShowMobileButtons = true,
         MobileButtonsSide = "Left",
 
@@ -10826,8 +10831,11 @@ function Library:CreateWindow(WindowInfo)
             Size = UDim2.new(0, X, 1, 0),
             Text = WindowInfo.Title,
             TextSize = 20,
+            -- Veloria: title warna accent merah
+            TextColor3 = Library.Scheme.AccentColor,
             Parent = TitleHolder,
         })
+        Library:AddToRegistry(WindowTitle, { TextColor3 = "AccentColor" })
 
         --// Top Right Bar \\--
         RightWrapper = New("Frame", {
@@ -10950,6 +10958,100 @@ function Library:CreateWindow(WindowInfo)
                 Parent = SearchBox,
             })
             Library:ApplyLucideIcon(SearchIconImage, SearchIcon)
+        end
+
+        --// Veloria Topbar Buttons \--
+        -- Tombol-tombol di sebelah kanan search: Discord, Minimize, Close
+        -- Masuk ke RightWrapper (UIListLayout horizontal, fill kiri ke kanan)
+        do
+            local function MakeTopbarBtn(Icon, Color, Callback)
+                local Btn = New("TextButton", {
+                    BackgroundColor3 = Color or "MainColor",
+                    BackgroundTransparency = 0.7,
+                    Size = UDim2.fromOffset(28, 28),
+                    Text = "",
+                    Parent = RightWrapper,
+                })
+                table.insert(Library.Corners, New("UICorner", {
+                    CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
+                    Parent = Btn,
+                }))
+                Library:AddOutline(Btn)
+
+                local BtnIcon = Library:GetCustomIcon(Icon)
+                if BtnIcon then
+                    local Img = New("ImageLabel", {
+                        AnchorPoint = Vector2.new(0.5, 0.5),
+                        BackgroundTransparency = 1,
+                        ImageColor3 = "FontColor",
+                        Position = UDim2.fromScale(0.5, 0.5),
+                        Size = UDim2.fromOffset(16, 16),
+                        Parent = Btn,
+                    })
+                    Library:ApplyLucideIcon(Img, BtnIcon)
+                end
+
+                Btn.MouseEnter:Connect(function()
+                    TweenService:Create(Btn, Library.TweenInfo, {
+                        BackgroundTransparency = 0.45,
+                    }):Play()
+                end)
+                Btn.MouseLeave:Connect(function()
+                    TweenService:Create(Btn, Library.TweenInfo, {
+                        BackgroundTransparency = 0.7,
+                    }):Play()
+                end)
+                Btn.MouseButton1Click:Connect(function()
+                    Library:SafeCallback(Callback)
+                end)
+
+                return Btn
+            end
+
+            -- Discord button (logo discord = message-circle di lucide)
+            local DiscordBtn = MakeTopbarBtn("message-circle", Library.Scheme.MainColor, function()
+                if WindowInfo.DiscordCallback then
+                    WindowInfo.DiscordCallback()
+                end
+            end)
+
+            -- Minimize button
+            local MinimizeBtn = MakeTopbarBtn("minus", Library.Scheme.MainColor, function()
+                if WindowInfo.MinimizeCallback then
+                    WindowInfo.MinimizeCallback()
+                else
+                    -- default: toggle window
+                    Library:Toggle()
+                end
+            end)
+
+            -- Close button — merah
+            local CloseBtn = MakeTopbarBtn("x", Library.Scheme.MainColor, function()
+                if WindowInfo.CloseCallback then
+                    WindowInfo.CloseCallback()
+                else
+                    Library:Unload()
+                end
+            end)
+            CloseBtn.BackgroundColor3 = Library.Scheme.AccentColor
+            Library:AddToRegistry(CloseBtn, { BackgroundColor3 = "AccentColor" })
+            CloseBtn.BackgroundTransparency = 0.75
+
+            CloseBtn.MouseEnter:Connect(function()
+                TweenService:Create(CloseBtn, Library.TweenInfo, {
+                    BackgroundTransparency = 0.35,
+                }):Play()
+            end)
+            CloseBtn.MouseLeave:Connect(function()
+                TweenService:Create(CloseBtn, Library.TweenInfo, {
+                    BackgroundTransparency = 0.75,
+                }):Play()
+            end)
+
+            -- Store refs buat Window methods
+            Window.DiscordBtn   = DiscordBtn
+            Window.MinimizeBtn  = MinimizeBtn
+            Window.CloseBtn     = CloseBtn
         end
 
         if MoveIcon then
@@ -11106,6 +11208,44 @@ function Library:CreateWindow(WindowInfo)
 
         WindowTitle.Text = title
         WindowInfo.Title = title
+    end
+
+    --// Veloria: topbar button API \--
+
+    -- Set callback untuk Discord button
+    function Window:SetDiscordCallback(Callback: () -> ())
+        WindowInfo.DiscordCallback = Callback
+    end
+
+    -- Set Discord link langsung (auto-open via setclipboard)
+    function Window:SetDiscordLink(Link: string)
+        WindowInfo.DiscordCallback = function()
+            if setclipboard then
+                setclipboard(Link)
+                Library:Notify({
+                    Title = "Discord",
+                    Description = "Discord link copied to clipboard!",
+                    Time = 3,
+                })
+            end
+        end
+    end
+
+    -- Override minimize behavior
+    function Window:SetMinimizeCallback(Callback: () -> ())
+        WindowInfo.MinimizeCallback = Callback
+    end
+
+    -- Override close behavior
+    function Window:SetCloseCallback(Callback: () -> ())
+        WindowInfo.CloseCallback = Callback
+    end
+
+    -- Toggle visibility of topbar buttons
+    function Window:SetTopbarButtonsVisible(Discord: boolean?, Minimize: boolean?, Close: boolean?)
+        if Window.DiscordBtn  and Discord  ~= nil then Window.DiscordBtn.Visible  = Discord  end
+        if Window.MinimizeBtn and Minimize ~= nil then Window.MinimizeBtn.Visible = Minimize end
+        if Window.CloseBtn   and Close    ~= nil then Window.CloseBtn.Visible    = Close    end
     end
 
     function Window:SetBackgroundImage(Image: string)
