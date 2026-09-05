@@ -6,7 +6,7 @@
  ╚████╔╝ ███████╗███████╗╚██████╔╝██║  ██║██║██║  ██║
   ╚═══╝  ╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
 ]]
--- By Rexz Izin
+-- By Rexz Cihuy
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
@@ -404,9 +404,10 @@ local Templates = {
         SnapAvoidCoreGui = true,
 
         -- Search bar: aktif, fixed width supaya tidak nabrak title / tombol kanan.
-        SearchbarSize = UDim2.fromOffset(210, 32),
+        -- Global topbar search: searches features across every tab, not only Loader.
+        SearchbarSize = UDim2.fromOffset(220, 34),
         DisableSearch = false,
-        GlobalSearch = false,
+        GlobalSearch = true,
 
         CornerRadius = 6,
         NotifySide = "Right",
