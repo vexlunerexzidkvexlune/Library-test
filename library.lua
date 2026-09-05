@@ -6,7 +6,7 @@
  ╚████╔╝ ███████╗███████╗╚██████╔╝██║  ██║██║██║  ██║
   ╚═══╝  ╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
 ]]
--- By Rexz Cihuy
+-- By Rexz Cihu
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
@@ -405,7 +405,9 @@ local Templates = {
 
         -- Search bar: aktif, fixed width supaya tidak nabrak title / tombol kanan.
         -- Global topbar search: searches features across every tab, not only Loader.
-        SearchbarSize = UDim2.fromOffset(220, 34),
+        -- Topbar controls dibuat sedikit lebih compact agar title/search/button
+        -- tetap punya jarak yang konsisten, terutama pada layar mobile.
+        SearchbarSize = UDim2.fromOffset(200, 32),
         DisableSearch = false,
         GlobalSearch = true,
 
@@ -461,7 +463,7 @@ local Templates = {
         TabSwipeOffset = 20,
         TabSwipeFrom = "bottom",
         TabButtonsStyle = {
-            Gap = 2,
+            Gap = 4,
             Padding = 4,
             CornerRadius = 6,
             Indicator = true,
@@ -10696,9 +10698,27 @@ function Library:CreateWindow(WindowInfo)
     }
 
     local InitialLeftWidth = math.ceil(WindowInfo.Size.X.Offset * 0.3)
-    -- Lebar area title topbar dibuat independen dari sidebar agar title tidak
-    -- pernah masuk ke area icon ketika sidebar sedang compact.
-    local TopbarTitleWidth = math.max(250, InitialLeftWidth + 30)
+
+    -- Topbar layout:
+    -- reserve space for search + 3 action buttons before sizing the title.
+    -- This prevents the title from visually colliding with the search box.
+    local TopbarGap = 6
+    local TopbarButtonSize = 32
+    local TopbarButtonCount = 3
+    local TopbarControlWidth = (WindowInfo.DisableSearch and 0 or WindowInfo.SearchbarSize.X.Offset)
+        + (TopbarButtonSize * TopbarButtonCount)
+        + (TopbarGap * (WindowInfo.DisableSearch and 2 or 3))
+    local TopbarRightInset = 16
+
+    -- Lebar area title topbar dibuat independen dari sidebar dan otomatis
+    -- mengecil bila ukuran window terlalu sempit.
+    local DesiredTitleWidth = math.max(250, InitialLeftWidth + 30)
+    local MaxTitleWidth = math.max(
+        180,
+        WindowInfo.Size.X.Offset - TopbarControlWidth - TopbarRightInset - 8
+    )
+    local TopbarTitleWidth = math.min(DesiredTitleWidth, MaxTitleWidth)
+
     local IsCompact = WindowInfo.SidebarCompacted
     local LastExpandedWidth = InitialLeftWidth
 
@@ -10869,17 +10889,22 @@ function Library:CreateWindow(WindowInfo)
         RightWrapper = New("Frame", {
             AnchorPoint = Vector2.new(1, 0.5),
             BackgroundTransparency = 1,
-            Position = UDim2.new(1, -49, 0.5, 0),
-            Size = UDim2.new(1, -TopbarTitleWidth - 57 - 1, 1, -16),
+            Position = UDim2.new(1, -TopbarRightInset, 0.5, 0),
+            Size = UDim2.new(
+                1,
+                -(TopbarTitleWidth + TopbarRightInset + 8),
+                1,
+                -10
+            ),
             ClipsDescendants = true,
             Parent = TopBar,
         })
 
         New("UIListLayout", {
             FillDirection = Enum.FillDirection.Horizontal,
-            HorizontalAlignment = Enum.HorizontalAlignment.Left,
+            HorizontalAlignment = Enum.HorizontalAlignment.Right,
             VerticalAlignment = Enum.VerticalAlignment.Center,
-            Padding = UDim.new(0, 8),
+            Padding = UDim.new(0, TopbarGap),
             Parent = RightWrapper,
         })
 
@@ -10953,10 +10978,10 @@ function Library:CreateWindow(WindowInfo)
             })
         )
         New("UIPadding", {
-            PaddingBottom = UDim.new(0, 2),
-            PaddingLeft = UDim.new(0, 38),
+            PaddingBottom = UDim.new(0, 1),
+            PaddingLeft = UDim.new(0, 34),
             PaddingRight = UDim.new(0, 10),
-            PaddingTop = UDim.new(0, 2),
+            PaddingTop = UDim.new(0, 1),
             Parent = SearchBox,
         })
         local SearchBoxStroke = New("UIStroke", {
@@ -11003,7 +11028,7 @@ function Library:CreateWindow(WindowInfo)
                 local Btn = New("TextButton", {
                     BackgroundColor3 = Color or "MainColor",
                     BackgroundTransparency = 0.7,
-                    Size = UDim2.fromOffset(28, 28),
+                    Size = UDim2.fromOffset(TopbarButtonSize, TopbarButtonSize),
                     Text = "",
                     Parent = RightWrapper,
                 })
@@ -11020,7 +11045,7 @@ function Library:CreateWindow(WindowInfo)
                         BackgroundTransparency = 1,
                         ImageColor3 = "FontColor",
                         Position = UDim2.fromScale(0.5, 0.5),
-                        Size = UDim2.fromOffset(16, 16),
+                        Size = UDim2.fromOffset(17, 17),
                         Parent = Btn,
                     })
                     Library:ApplyLucideIcon(Img, BtnIcon)
@@ -11138,8 +11163,9 @@ function Library:CreateWindow(WindowInfo)
             BackgroundTransparency = 1,
             Size = UDim2.fromScale(1, 1),
             Text = WindowInfo.Footer,
-            TextSize = 14,
-            TextTransparency = 0.5,
+            TextSize = 13,
+            TextTransparency = 0.45,
+            TextXAlignment = Enum.TextXAlignment.Center,
             Parent = BottomBar,
         })
 
