@@ -1,4 +1,3 @@
--- Rexz Guanteng Hehehe
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
@@ -419,7 +418,11 @@ local Templates = {
         EnableSidebarResize = true,
         EnableCompacting = true,
         DisableCompactingSnap = false,
-        SidebarCompacted = true,
+
+        --// Compact State \--
+        SidebarCompacted = true, -- sidebar starts compacted
+        TitleCompacted = false,   -- title hides when sidebar is compacted
+
         MinContainerWidth = 256,
 
         --// Snapping \\--
@@ -11468,9 +11471,14 @@ function Library:CreateWindow(WindowInfo)
             IsCompact = Window:GetSidebarWidth() <= WindowInfo.CompactWidthActivation
         end
 
-        WindowTitle.Visible = not IsCompact
+        -- Sidebar and title compact states are intentionally separate.
+        -- SidebarCompacted controls the sidebar width/state.
+        -- TitleCompacted only controls whether the title is hidden while compact.
+        WindowTitle.Visible = not (IsCompact and WindowInfo.TitleCompacted)
         if not WindowInfo.Icon then
-            WindowIcon.Visible = IsCompact
+            WindowIcon.Visible = IsCompact and WindowInfo.TitleCompacted
+        elseif WindowIcon then
+            WindowIcon.Visible = true
         end
 
         for _, Button in Library.TabButtons do
