@@ -6,7 +6,7 @@
  ╚████╔╝ ███████╗███████╗╚██████╔╝██║  ██║██║██║  ██║
   ╚═══╝  ╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
 ]]
--- By Rexz Cihuy 
+-- By Rexz Izin
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
@@ -386,7 +386,7 @@ local Templates = {
     --// Library \\--
     Window = {
         Title = "Veloria Hub",
-        Footer = "Veloria Hub By Rexz",
+        Footer = "Veloria Hub Premium Support | By Rexz",
 
         Position = UDim2.fromOffset(6, 6),
         Size = UDim2.fromOffset(680, 560),
@@ -404,7 +404,7 @@ local Templates = {
         SnapAvoidCoreGui = true,
 
         -- Search bar: aktif, fixed width supaya tidak nabrak title / tombol kanan.
-        SearchbarSize = UDim2.fromOffset(180, 32),
+        SearchbarSize = UDim2.fromOffset(210, 32),
         DisableSearch = false,
         GlobalSearch = false,
 
@@ -10697,7 +10697,7 @@ function Library:CreateWindow(WindowInfo)
     local InitialLeftWidth = math.ceil(WindowInfo.Size.X.Offset * 0.3)
     -- Lebar area title topbar dibuat independen dari sidebar agar title tidak
     -- pernah masuk ke area icon ketika sidebar sedang compact.
-    local TopbarTitleWidth = math.max(220, InitialLeftWidth)
+    local TopbarTitleWidth = math.max(250, InitialLeftWidth + 30)
     local IsCompact = WindowInfo.SidebarCompacted
     local LastExpandedWidth = InitialLeftWidth
 
@@ -10844,20 +10844,19 @@ function Library:CreateWindow(WindowInfo)
             })
         end
 
-        local X = Library:GetTextBounds(
-            WindowInfo.Title,
-            Library.Scheme.Font,
-            20,
-            TitleHolder.AbsoluteSize.X - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 6 or 0) - 12
-        )
+        -- Title width dihitung dari lebar container, bukan AbsoluteSize saat init.
+        -- Ini mencegah title terpotong/masuk ke area icon.
+        local TitleAvailableWidth = math.max(72, TopbarTitleWidth - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 42 or 30))
         WindowTitle = New("TextLabel", {
             BackgroundTransparency = 1,
             LayoutOrder = 2,
-            Size = UDim2.new(0, math.min(X, math.max(0, TopbarTitleWidth - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 42 or 30))), 1, 0),
+            Size = UDim2.fromOffset(TitleAvailableWidth, 48),
             Text = WindowInfo.Title,
             TextSize = 18,
             FontFace = Library.Scheme.Font,
             TextXAlignment = Enum.TextXAlignment.Left,
+            TextYAlignment = Enum.TextYAlignment.Center,
+            TextWrapped = false,
             TextTruncate = Enum.TextTruncate.AtEnd,
             -- Veloria: title warna accent merah
             TextColor3 = Library.Scheme.AccentColor,
@@ -10871,6 +10870,7 @@ function Library:CreateWindow(WindowInfo)
             BackgroundTransparency = 1,
             Position = UDim2.new(1, -49, 0.5, 0),
             Size = UDim2.new(1, -TopbarTitleWidth - 57 - 1, 1, -16),
+            ClipsDescendants = true,
             Parent = TopBar,
         })
 
@@ -10953,7 +10953,7 @@ function Library:CreateWindow(WindowInfo)
         )
         New("UIPadding", {
             PaddingBottom = UDim.new(0, 2),
-            PaddingLeft = UDim.new(0, 34),
+            PaddingLeft = UDim.new(0, 38),
             PaddingRight = UDim.new(0, 10),
             PaddingTop = UDim.new(0, 2),
             Parent = SearchBox,
@@ -10984,8 +10984,9 @@ function Library:CreateWindow(WindowInfo)
                 BackgroundTransparency = 1,
                 ImageColor3 = "FontColor",
                 ImageTransparency = 0.45,
-                Position = UDim2.new(0, 10, 0.5, 0),
+                Position = UDim2.new(0, 11, 0.5, 0),
                 Size = UDim2.fromOffset(16, 16),
+                ZIndex = SearchBox.ZIndex + 1,
                 Parent = SearchBox,
             })
             Library:ApplyLucideIcon(SearchIconImage, SearchIcon)
@@ -11247,6 +11248,7 @@ function Library:CreateWindow(WindowInfo)
 
         WindowTitle.Text = title
         WindowInfo.Title = title
+        WindowTitle.TextTruncate = Enum.TextTruncate.AtEnd
     end
 
     --// Veloria: topbar button API \--
