@@ -10962,6 +10962,8 @@ function Library:CreateWindow(WindowInfo)
 
         --// Veloria Topbar Buttons \--
         -- Tombol-tombol di sebelah kanan search: Discord, Minimize, Close
+        -- Declared as upvalues — assigned to Window table after Window = {} below
+        local VeloriaDiscordBtn, VeloriaMinimizeBtn, VeloriaCloseBtn
         -- Masuk ke RightWrapper (UIListLayout horizontal, fill kiri ke kanan)
         do
             local function MakeTopbarBtn(Icon, Color, Callback)
@@ -11048,10 +11050,11 @@ function Library:CreateWindow(WindowInfo)
                 }):Play()
             end)
 
-            -- Store refs buat Window methods
-            Window.DiscordBtn   = DiscordBtn
-            Window.MinimizeBtn  = MinimizeBtn
-            Window.CloseBtn     = CloseBtn
+            -- Store refs ke upvalue locals buat Window methods
+            -- (Window table belum exist di sini, assign setelah Window = {} dibuat)
+            VeloriaDiscordBtn  = DiscordBtn
+            VeloriaMinimizeBtn = MinimizeBtn
+            VeloriaCloseBtn    = CloseBtn
         end
 
         if MoveIcon then
@@ -11192,6 +11195,11 @@ function Library:CreateWindow(WindowInfo)
 
     --// Window Table \\--
     local Window = {}
+
+    -- Veloria: assign topbar button refs now that Window exists
+    Window.DiscordBtn  = VeloriaDiscordBtn
+    Window.MinimizeBtn = VeloriaMinimizeBtn
+    Window.CloseBtn    = VeloriaCloseBtn
     local Fading = false
 
     local function SetUICorner(UICorner, Corner, HalfValue)
