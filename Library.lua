@@ -1,3 +1,12 @@
+--[[
+██╗   ██╗███████╗██╗      ██████╗ ██████╗ ██╗ █████╗
+██║   ██║██╔════╝██║     ██╔═══██╗██╔══██╗██║██╔══██╗
+██║   ██║█████╗  ██║     ██║   ██║██████╔╝██║███████║
+╚██╗ ██╔╝██╔══╝  ██║     ██║   ██║██╔══██╗██║██╔══██║
+ ╚████╔╝ ███████╗███████╗╚██████╔╝██║  ██║██║██║  ██║
+  ╚═══╝  ╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
+]]
+-- By Rexz Izin
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
@@ -10916,13 +10925,17 @@ function Library:CreateWindow(WindowInfo)
         SearchBox = New("TextBox", {
             BackgroundColor3 = "MainColor",
             PlaceholderText = "Search",
+            -- Search sekarang fleksibel dan hanya mengambil ruang yang tersisa
+            -- setelah CurrentTabInfo dan tombol Discord/Minimize/Close.
             Size = WindowInfo.SearchbarSize,
             TextScaled = true,
             Visible = not (WindowInfo.DisableSearch or false),
             Parent = RightWrapper,
         })
         New("UIFlexItem", {
-            FlexMode = Enum.UIFlexMode.Shrink,
+            -- Jangan biarkan Search memaksa lebar tetap dan menabrak tombol kanan.
+            -- Grow = mengisi ruang kosong, Shrink = mengecil saat ruang sempit.
+            FlexMode = Enum.UIFlexMode.Grow,
             Parent = SearchBox,
         })
         table.insert(
@@ -11530,7 +11543,9 @@ function Library:CreateWindow(WindowInfo)
         CurrentTabDescription.Text = Description
 
         if IsDefaultSearchbarSize then
-            SearchBox.Size = UDim2.fromScale(0.5, 1)
+            -- CurrentTabInfo + Search berbagi area kiri dari topbar.
+            -- Search akan tetap tunduk pada tombol kanan karena memakai UIFlex.
+            SearchBox.Size = UDim2.fromScale(1, 1)
         end
         CurrentTabInfo.Visible = true
     end
