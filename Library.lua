@@ -1,3 +1,4 @@
+--- Rexz Ganteng Banget Loh Ya
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
@@ -418,7 +419,7 @@ local Templates = {
         EnableSidebarResize = true,
         EnableCompacting = true,
         DisableCompactingSnap = false,
-        SidebarCompacted = false,
+        SidebarCompacted = true,
         MinContainerWidth = 256,
 
         --// Snapping \\--
