@@ -403,7 +403,9 @@ local Templates = {
         SnapMargin = 8,
         SnapAvoidCoreGui = true,
 
+        -- Search topbar dimatikan agar tidak mengganggu Title dan tombol kanan.
         SearchbarSize = UDim2.fromScale(1, 1),
+        DisableSearch = true,
         GlobalSearch = false,
 
         CornerRadius = 6,
