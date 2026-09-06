@@ -5,8 +5,133 @@
 ╚██╗ ██╔╝██╔══╝  ██║     ██║   ██║██╔══██╗██║██╔══██║
  ╚████╔╝ ███████╗███████╗╚██████╔╝██║  ██║██║██║  ██║
   ╚═══╝  ╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
+
+██╗  ██╗██╗   ██╗██████╗
+██║  ██║██║   ██║██╔══██╗
+███████║██║   ██║██████╔╝
+██╔══██║██║   ██║██╔══██╗
+██║  ██║╚██████╔╝██████╔╝
+╚═╝  ╚═╝ ╚═════╝ ╚═════╝
 ]]
--- By Rexz Cihuy
+-- By Rexz Owner Veloria Hub
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
@@ -40,6 +165,13 @@ local Tooltips = {}
 
 local BaseURL = "https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/"
 local CustomImageManager = {}
+
+--// Veloria custom icon aliases \--
+local CustomIconAliases = {
+    Veloria = "rbxassetid://90384664719494",
+    veloria = "rbxassetid://90384664719494",
+}
+
 local CustomImageManagerAssets = {
     TransparencyTexture = {
         RobloxId = 139785960036434,
@@ -453,7 +585,7 @@ local Templates = {
         -- BackgroundImage = "rbxassetid://123456789",
         -- atau URL gambar https://... (akan di-download sebagai custom asset).
         BackgroundImage = "",
-        BackgroundImageTransparency = 0.82,
+        BackgroundImageTransparency = 0.20,
         BackgroundImageScaleType = "Stretch",
         BackgroundImageColor3 = Color3.new(1, 1, 1),
 
@@ -573,6 +705,10 @@ local Templates = {
         Values = {},
         DisabledValues = {},
         ValueImages = {},
+
+        --// Expand controls \--
+        Expand = true,
+        DefaultExpanded = false,
 
         Multi = false,
         DragSelect = false,
@@ -1534,6 +1670,11 @@ function Library:GetCustomIcon(IconName: string): any
         return nil
     end
 
+    -- Named custom icon alias: "Verlo" -> 90384664719494
+    if typeof(IconName) == "string" and CustomIconAliases[IconName] then
+        IconName = CustomIconAliases[IconName]
+    end
+
     if tonumber(IconName) then
         IconName = string.format("rbxassetid://%s", tostring(IconName))
     end
@@ -1559,6 +1700,10 @@ function Library:GetCustomIcon(IconName: string): any
     end
 
     return nil
+end
+
+function Library:GetVerloIcon()
+    return Library:GetCustomIcon("Verlo")
 end
 
 function Library:ApplyLucideIcon(ImageGui: any, Icon: any, Rotation: number?)
@@ -9024,11 +9169,29 @@ do
         end
 
         local ToggleDropdown = function()
-            if Dropdown.Disabled then
+            if Dropdown.Disabled or Dropdown.Expand == false then
                 return
             end
 
             MenuTable:Toggle()
+        end
+
+        --// Explicit expand API
+        function Dropdown:Open()
+            if Dropdown.Expand and not Dropdown.Disabled and not MenuTable.Active then
+                Dropdown:BuildDropdownList()
+                MenuTable:Open()
+            end
+        end
+
+        function Dropdown:Close()
+            if MenuTable.Active then
+                MenuTable:Close()
+            end
+        end
+
+        function Dropdown:Toggle()
+            ToggleDropdown()
         end
 
         table.insert(Dropdown.Connections, DisplayContainer.MouseButton1Click:Connect(ToggleDropdown))
@@ -9099,6 +9262,16 @@ do
         Dropdown:UpdateColors()
         Dropdown:Display()
         Dropdown:BuildDropdownList()
+
+        --// Optional default expanded state
+        if Dropdown.Expand and Dropdown.DefaultExpanded then
+            task.defer(function()
+                if not Dropdown.Destroyed and not Dropdown.Disabled and not MenuTable.Active then
+                    Dropdown:Open()
+                end
+            end)
+        end
+
         Groupbox:Resize()
 
         Dropdown.Holder = Holder
